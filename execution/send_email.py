@@ -1,7 +1,7 @@
 """
 send_email.py
 -------------
-Sends the daily AI debrief markdown summary as a formatted HTML email via SMTP.
+Sends the daily AI debrief markdown summary as a formatted HTML email via Resend.
 
 Input:  .tmp/daily_summary_YYYYMMDD.md
 Output: Email delivered to EMAIL_TO
@@ -9,11 +9,9 @@ Output: Email delivered to EMAIL_TO
 
 import os
 import re
-import smtplib
 import sys
+import requests
 from datetime import datetime
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -147,15 +145,12 @@ def build_html_email(md_content: str) -> str:
 # ---------------------------------------------------------------------------
 
 def send(md_content: str):
-    smtp_host  = os.getenv("SMTP_HOST", "smtp.gmail.com")
-    smtp_port  = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user  = os.getenv("SMTP_USER")
-    smtp_pass  = os.getenv("SMTP_PASSWORD")
-    email_from = os.getenv("EMAIL_FROM") or smtp_user
+    api_key    = os.getenv("RESEND_API_KEY")
+    email_from = os.getenv("EMAIL_FROM", "AI Debrief <onboarding@resend.dev>")
     email_to   = os.getenv("EMAIL_TO")
 
     missing = [k for k, v in {
-        "SMTP_USER": smtp_user, "SMTP_PASSWORD": smtp_pass, "EMAIL_TO": email_to
+        "RESEND_API_KEY": api_key, "EMAIL_TO": email_to
     }.items() if not v]
     if missing:
         print(f"ERROR: Missing env vars: {', '.join(missing)}")
@@ -164,21 +159,25 @@ def send(md_content: str):
     date_str = datetime.now().strftime("%B %d, %Y")
     subject  = f"AI Daily Debrief — {date_str}"
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"]    = email_from
-    msg["To"]      = email_to
-    msg.attach(MIMEText(md_content, "plain"))
-    msg.attach(MIMEText(build_html_email(md_content), "html"))
+    print(f"Sending email to {email_to} via Resend...")
+    resp = requests.post(
+        "https://api.resend.com/emails",
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        json={
+            "from":    email_from,
+            "to":      [email_to],
+            "subject": subject,
+            "text":    md_content,
+            "html":    build_html_email(md_content),
+        },
+        timeout=30,
+    )
 
-    print(f"Sending email to {email_to} via {smtp_host}:{smtp_port}...")
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
-        server.ehlo()
-        server.starttls()
-        server.login(smtp_user, smtp_pass)
-        server.sendmail(email_from, email_to, msg.as_string())
+    if resp.status_code not in (200, 201):
+        print(f"ERROR: Resend returned {resp.status_code}: {resp.text}")
+        sys.exit(1)
 
-    print("Email sent successfully.")
+    print(f"Email sent successfully. ID: {resp.json().get('id')}")
 
 
 def main():
