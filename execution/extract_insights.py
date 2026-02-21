@@ -57,7 +57,14 @@ def extract_insights(post: dict) -> dict:
             max_tokens=400,
             messages=[{"role": "user", "content": prompt}],
         )
-        result = json.loads(response.content[0].text.strip())
+        raw = response.content[0].text.strip()
+        # Strip markdown code fences if present
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+            raw = raw.strip()
+        result = json.loads(raw)
         insights = result.get("insights", [])
         topic    = result.get("topic", "Update")
     except (json.JSONDecodeError, KeyError, IndexError) as e:

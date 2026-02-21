@@ -263,14 +263,26 @@ def scrape_company_posts(page, company: str, url: str) -> list[dict]:
 # Main
 # ---------------------------------------------------------------------------
 
+FALLBACK_CHROMIUM = "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome"
+
+
 def main():
     Path(".tmp").mkdir(exist_ok=True)
 
+    # Allow overriding the browser binary via env (useful when auto-download is blocked)
+    executable_path = os.getenv("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH") or (
+        FALLBACK_CHROMIUM if Path(FALLBACK_CHROMIUM).exists() else None
+    )
+
     with sync_playwright() as p:
-        browser = p.chromium.launch(
+        launch_kwargs = dict(
             headless=HEADLESS,
             args=["--no-sandbox", "--disable-dev-shm-usage"],
         )
+        if executable_path:
+            launch_kwargs["executable_path"] = executable_path
+            print(f"Using browser: {executable_path}")
+        browser = p.chromium.launch(**launch_kwargs)
         context = browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "

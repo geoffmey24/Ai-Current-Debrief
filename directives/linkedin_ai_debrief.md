@@ -11,8 +11,8 @@ extract key insights per post using Claude, and email a concise daily summary.
 | Grok     | https://www.linkedin.com/company/grok-ai/posts/?feedView=all |
 | Claude   | https://www.linkedin.com/showcase/claude/posts/?feedView=all |
 | Anthropic| https://www.linkedin.com/company/anthropicresearch/posts/?feedView=all |
-| OpenAI   | https://www.linkedin.com/company/openai/ |
-| n8n      | https://www.linkedin.com/company/n8n/product/ |
+| OpenAI   | https://www.linkedin.com/company/openai/posts/?feedView=all |
+| n8n      | https://www.linkedin.com/company/n8n/posts/?feedView=all |
 
 ## Pipeline (run in order)
 
@@ -82,8 +82,10 @@ python execution/run_daily_debrief.py
 | LinkedIn security checkpoint / CAPTCHA | Run with `HEADLESS=false` env var set, solve the challenge manually once, session is saved |
 | No posts found for a company | Company may not have posted recently — script logs a warning and continues |
 | Selectors broken (LinkedIn DOM change) | Update `SELECTORS` dict at top of `scrape_linkedin_posts.py`; check DevTools for current class names |
-| Gmail SMTP auth error | Use an App Password (Google Account → Security → App Passwords), not your regular password |
+| Gmail SMTP "Username and Password not accepted" | **Must use a Gmail App Password**, not your regular password. Google removed regular-password SMTP in 2024. Go to: myaccount.google.com → Security → 2-Step Verification → App Passwords. Takes 30 seconds. |
 | 2FA required on LinkedIn | Log in manually in a browser once to establish session, copy the `li_at` cookie value into `.tmp/linkedin_session.json` |
+| Claude API returns empty JSON / parse error | Claude sometimes wraps JSON in markdown fences. Fixed in extract_insights.py — strips ` ```json ` before parsing. |
+| Scraper not reaching LinkedIn (ERR_INVALID_AUTH_CREDENTIALS) | You are behind a restricted proxy. Must run this pipeline on your local machine or an unrestricted server, not in a sandboxed environment. |
 
 ## Edge Cases
 - If zero posts are found across all companies, the email is still sent with a "No posts today" note
