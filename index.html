@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Otto — Game of Life</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Three.js canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- ══════════════════════════════════════ TITLE SCREEN ══════════════════════════════════════ -->
+    <div id="screen-title" class="screen active">
+      <div class="title-bg"></div>
+      <div class="title-content">
+        <div class="title-logo">
+          <span class="title-word">OTTO</span>
+          <span class="title-sub">Game of Life</span>
+        </div>
+        <button id="btn-new-game" class="btn-primary">New Game</button>
+        <button id="btn-continue" class="btn-secondary hidden">Continue</button>
+        <p class="title-tagline">Every month. Every choice. One life.</p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ CHARACTER CREATION ══════════════════════════════════════ -->
+    <div id="screen-create" class="screen">
+      <div class="screen-header">
+        <h2>Create Your Character</h2>
+        <p class="screen-subtext">Age 18 — Your story begins</p>
+      </div>
+      <div class="create-layout">
+        <div class="create-preview">
+          <canvas id="previewCanvas" width="220" height="320"></canvas>
+          <div class="character-age-label">Age 18</div>
+        </div>
+        <div class="create-options">
+          <div class="option-group">
+            <label>Name</label>
+            <input type="text" id="char-name" placeholder="Your name" maxlength="16" />
+          </div>
+          <div class="option-group">
+            <label>Skin Tone</label>
+            <div class="color-row" id="skin-options">
+              <div class="color-swatch selected" data-value="skin1" style="background:#FDDCB5"></div>
+              <div class="color-swatch" data-value="skin2" style="background:#F0C27F"></div>
+              <div class="color-swatch" data-value="skin3" style="background:#C68642"></div>
+              <div class="color-swatch" data-value="skin4" style="background:#8D5524"></div>
+              <div class="color-swatch" data-value="skin5" style="background:#4A2912"></div>
+            </div>
+          </div>
+          <div class="option-group">
+            <label>Hair Style</label>
+            <div class="style-row" id="hair-style-options">
+              <button class="style-btn selected" data-value="A">Short</button>
+              <button class="style-btn" data-value="B">Medium</button>
+              <button class="style-btn" data-value="C">Long</button>
+            </div>
+          </div>
+          <div class="option-group">
+            <label>Hair Color</label>
+            <div class="color-row" id="hair-options">
+              <div class="color-swatch selected" data-value="h1" style="background:#2C1A0E"></div>
+              <div class="color-swatch" data-value="h2" style="background:#6B3A2A"></div>
+              <div class="color-swatch" data-value="h3" style="background:#C49A3C"></div>
+              <div class="color-swatch" data-value="h4" style="background:#E8E8D0"></div>
+              <div class="color-swatch" data-value="h5" style="background:#8B1A1A"></div>
+              <div class="color-swatch" data-value="h6" style="background:#2E4057"></div>
+            </div>
+          </div>
+          <div class="option-group">
+            <label>Outfit Color</label>
+            <div class="color-row" id="outfit-options">
+              <div class="color-swatch selected" data-value="o1" style="background:#3B5998"></div>
+              <div class="color-swatch" data-value="o2" style="background:#2E7D32"></div>
+              <div class="color-swatch" data-value="o3" style="background:#C62828"></div>
+              <div class="color-swatch" data-value="o4" style="background:#6A1B9A"></div>
+              <div class="color-swatch" data-value="o5" style="background:#37474F"></div>
+              <div class="color-swatch" data-value="o6" style="background:#E65100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button id="btn-create-done" class="btn-primary">Begin Life →</button>
+    </div>
+
+    <!-- ══════════════════════════════════════ LOCATION SELECT ══════════════════════════════════════ -->
+    <div id="screen-location" class="screen">
+      <div class="screen-header">
+        <h2>Where Will You Begin?</h2>
+        <p class="screen-subtext">Your starting location shapes your opportunities</p>
+      </div>
+      <div class="location-cards">
+        <div class="loc-card" data-location="city">
+          <div class="loc-icon">🏙️</div>
+          <h3>City</h3>
+          <p>High cost of living. More jobs, higher salaries, and endless opportunities — if you can handle the pressure.</p>
+          <div class="loc-stats">
+            <span class="loc-stat pos">↑ Salary</span>
+            <span class="loc-stat pos">↑ Opportunities</span>
+            <span class="loc-stat neg">↓ Expenses</span>
+          </div>
+        </div>
+        <div class="loc-card" data-location="suburb">
+          <div class="loc-icon">🏘️</div>
+          <h3>Neighborhood</h3>
+          <p>Balanced life. Moderate income, tight community, and a comfortable pace. The middle path.</p>
+          <div class="loc-stats">
+            <span class="loc-stat neu">= Salary</span>
+            <span class="loc-stat pos">↑ Happiness</span>
+            <span class="loc-stat neu">= Expenses</span>
+          </div>
+        </div>
+        <div class="loc-card" data-location="smalltown">
+          <div class="loc-icon">🌾</div>
+          <h3>Small Town</h3>
+          <p>Lower cost, tight-knit community. Fewer high-paying careers but stronger relationships and slower pace.</p>
+          <div class="loc-stats">
+            <span class="loc-stat neg">↓ Salary</span>
+            <span class="loc-stat pos">↑ Relationships</span>
+            <span class="loc-stat pos">↑ Low Expenses</span>
+          </div>
+        </div>
+      </div>
+      <button id="btn-location-done" class="btn-primary hidden">Start Here →</button>
+    </div>
+
+    <!-- ══════════════════════════════════════ GAME HUD ══════════════════════════════════════ -->
+    <div id="game-ui" class="hidden">
+      <!-- Top HUD -->
+      <div id="hud">
+        <div class="hud-stat" id="hud-money">
+          <span class="hud-icon">$</span>
+          <span id="stat-money">5,000</span>
+        </div>
+        <div class="hud-stat" id="hud-knowledge">
+          <span class="hud-icon">📚</span>
+          <span id="stat-knowledge">0</span>
+        </div>
+        <div class="hud-stat" id="hud-happiness">
+          <span class="hud-icon">☀</span>
+          <div class="stat-bar"><div id="bar-happiness" class="bar-fill happiness-bar" style="width:75%"></div></div>
+          <span id="stat-happiness">75</span>
+        </div>
+        <div class="hud-stat" id="hud-health">
+          <span class="hud-icon">♥</span>
+          <div class="stat-bar"><div id="bar-health" class="bar-fill health-bar" style="width:80%"></div></div>
+          <span id="stat-health">80</span>
+        </div>
+        <div class="hud-age">
+          <span id="stat-age">18</span>
+          <span class="age-label">yrs</span>
+        </div>
+      </div>
+
+      <!-- Location label -->
+      <div id="location-label">
+        <span id="location-name">Map</span>
+      </div>
+
+      <!-- Back to map button -->
+      <button id="btn-back-map" class="hidden">← Map</button>
+
+      <!-- Notification area -->
+      <div id="notifications"></div>
+
+      <!-- Month indicator -->
+      <div id="month-indicator" class="hidden">
+        <span id="month-text">Month 1</span>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ DECISION CARD ══════════════════════════════════════ -->
+    <div id="decision-overlay" class="hidden">
+      <div class="decision-backdrop"></div>
+      <div class="decision-card">
+        <div class="card-location-tag" id="card-location-tag">Home</div>
+        <h3 id="card-title">Decision Title</h3>
+        <p id="card-description">Card description text here.</p>
+        <div id="card-options" class="card-options"></div>
+        <button id="btn-skip-card" class="btn-text-small">Skip</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ ACTION ANIMATION ══════════════════════════════════════ -->
+    <div id="action-overlay" class="hidden">
+      <div class="action-content">
+        <div class="action-animation-area">
+          <div id="action-emoji" class="action-emoji">💻</div>
+          <p id="action-text" class="action-text">Working at desk...</p>
+        </div>
+        <div class="action-stats-live" id="action-stats-live"></div>
+        <div class="action-progress">
+          <div class="action-progress-bar" id="action-progress-bar"></div>
+        </div>
+        <button id="btn-skip-action" class="btn-secondary">Skip</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ ROOM INTERACTION HINTS ══════════════════════════════════════ -->
+    <div id="interaction-hints" class="hidden">
+      <p class="hint-text">Tap an object to interact</p>
+    </div>
+
+    <!-- ══════════════════════════════════════ DEATH SCREEN ══════════════════════════════════════ -->
+    <div id="screen-death" class="screen">
+      <div class="death-bg"></div>
+      <div class="death-content">
+        <div class="death-header">
+          <h2 id="death-title">A Life Well-Lived</h2>
+          <p id="death-subtitle">You lived to age 70</p>
+        </div>
+        <div class="death-summary">
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="summary-icon">$</span>
+              <span class="summary-label">Final Wealth</span>
+              <span class="summary-value" id="sum-money">$0</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-icon">📚</span>
+              <span class="summary-label">Knowledge</span>
+              <span class="summary-value" id="sum-knowledge">0</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-icon">☀</span>
+              <span class="summary-label">Happiness</span>
+              <span class="summary-value" id="sum-happiness">0</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-icon">♥</span>
+              <span class="summary-label">Health</span>
+              <span class="summary-value" id="sum-health">0</span>
+            </div>
+          </div>
+          <div class="summary-story">
+            <h4>Your Story</h4>
+            <div id="sum-achievements" class="achievement-list"></div>
+            <div id="sum-relationships" class="relationship-summary"></div>
+            <div id="sum-career" class="career-summary"></div>
+          </div>
+          <div class="death-score">
+            <span class="score-label">Life Score</span>
+            <span class="score-value" id="sum-score">0</span>
+          </div>
+        </div>
+        <button id="btn-new-life" class="btn-primary">New Life</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ NPC TOOLTIP ══════════════════════════════════════ -->
+    <div id="npc-tooltip" class="hidden">
+      <span id="npc-tooltip-name">Alex</span>
+      <span id="npc-tooltip-rel">Friend</span>
+    </div>
+
+    <!-- ══════════════════════════════════════ JOB STATUS ══════════════════════════════════════ -->
+    <div id="job-status" class="hidden">
+      <span id="job-title-display">Unemployed</span>
+      <span id="job-salary-display"></span>
+    </div>
+  </div>
+
+  <!-- Three.js from CDN -->
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+
+  <!-- Game scripts (order matters) -->
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/Stats.js"></script>
+  <script src="js/CharacterState.js"></script>
+  <script src="js/CharacterModel.js"></script>
+  <script src="js/NPCSystem.js"></script>
+  <script src="js/CareerSystem.js"></script>
+  <script src="js/MapScene.js"></script>
+  <script src="js/RoomScene.js"></script>
+  <script src="js/DecisionSystem.js"></script>
+  <script src="js/UI.js"></script>
+  <script src="js/Storage.js"></script>
+  <script src="js/Game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
